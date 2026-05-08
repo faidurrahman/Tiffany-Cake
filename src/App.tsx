@@ -22,7 +22,7 @@ const PRODUCTS: Product[] = [
   { id: 6, name: 'Lotus & Cheese Mix Pie', price: 150000 },
   { id: 7, name: 'SilverQueen & Cheese Mix Pie', price: 155000 },
   { id: 8, name: 'Original & Cheese Mix Pie', price: 145000 },
-  { id: 9, name: 'Marble Cake', price: 85000 },
+  { id: 9, name: 'Marble Cake', price: 100000 },
 ];
 
 const formatIDR = (amount: number) => {
