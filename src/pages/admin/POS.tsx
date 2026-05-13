@@ -193,7 +193,7 @@ export default function POS() {
       </main>
 
       {/* Sticky Checkout Bar */}
-      <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] p-4 z-20 print:hidden">
+      <div className="fixed bottom-16 lg:bottom-0 left-0 w-full bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] p-4 z-20 print:hidden">
         <div className="max-w-lg mx-auto">
           <div className="flex justify-between items-center mb-3">
             <span className="text-gray-500 font-medium">Total Pembayaran</span>
@@ -201,11 +201,11 @@ export default function POS() {
           </div>
           <button
             onClick={handleSavePDF}
-            disabled={cart.length === 0 || isSaving}
+            disabled={isSaving}
             className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold text-lg shadow-md shadow-blue-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
           >
             {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-            {isSaving ? 'Menyimpan PDF...' : 'Save as PDF'}
+            {isSaving ? 'Menyimpan PDF...' : 'Download Struk (PDF)'}
           </button>
         </div>
       </div>
