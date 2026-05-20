@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, ShoppingBag, Settings } from 'lucide-react';
+import { LogOut, LayoutDashboard, ShoppingBag, Settings, Wallet } from 'lucide-react';
 
 export default function AdminSidebar() {
   const navigate = useNavigate();
@@ -35,6 +35,10 @@ export default function AdminSidebar() {
         <NavLink to="/admin/pos" className={navClasses}>
           <LayoutDashboard className="w-5 h-5" />
           Menu Kasir (POS)
+        </NavLink>
+        <NavLink to="/admin/kas" className={navClasses}>
+          <Wallet className="w-5 h-5" />
+          Buku Kas
         </NavLink>
         <NavLink to="/admin/products" className={navClasses}>
           <ShoppingBag className="w-5 h-5" />

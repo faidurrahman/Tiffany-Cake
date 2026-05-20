@@ -26,11 +26,26 @@ export interface SliderImage {
   subtitle?: string;
 }
 
+export interface Transaction {
+  id: number;
+  date: string;
+  description: string;
+  type: 'IN' | 'OUT';
+  amount: number;
+}
+
 interface DataContextType {
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   sliders: SliderImage[];
   setSliders: React.Dispatch<React.SetStateAction<SliderImage[]>>;
+  transactions: Transaction[];
+  setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => void;
+  updateTransaction: (id: number, transaction: Omit<Transaction, 'id' | 'date'>) => void;
+  deleteTransaction: (id: number) => void;
+  appScriptUrl: string;
+  setAppScriptUrl: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const DEFAULT_PRODUCTS: Product[] = [
@@ -93,7 +108,7 @@ const DEFAULT_PRODUCTS: Product[] = [
   { 
     id: 9, 
     name: 'Marble Cake', 
-    price: 100000, 
+    price: 85000, 
     description: 'Bolu klasik dengan motif marmer cokelat vanilla yang moist dan wangi mentega.',
     imageUrl: 'https://images.unsplash.com/photo-1605807646983-377bc5a76493?q=80&w=600&auto=format&fit=crop'
   },
@@ -138,6 +153,105 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     return saved ? JSON.parse(saved) : DEFAULT_SLIDERS;
   });
 
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    const saved = localStorage.getItem('tiffany_transactions');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [appScriptUrl, setAppScriptUrl] = useState<string>(() => {
+    return localStorage.getItem('tiffany_appscript_url') || 'https://script.google.com/macros/s/AKfycbxoUF5QtCOarGkSag6RT2RpHh1k3mbPodrDv5oCiFF9IiEHgvNsX0r9whbkzmjNShJZ/exec';
+  });
+
+  const addTransaction = (t: Omit<Transaction, 'id' | 'date'>) => {
+    const newTransaction: Transaction = {
+      ...t,
+      id: Date.now(),
+      date: new Date().toISOString()
+    };
+    setTransactions(prev => [newTransaction, ...prev]);
+
+    // Opsi: Kirim ke Google Sheets lewat Apps Script
+    // Menggunakan appScriptUrl dari pengaturan pengguna jika VITE_APPSCRIPT_URL tidak ada
+    const currentAppScriptUrl = import.meta.env.VITE_APPSCRIPT_URL || localStorage.getItem('tiffany_appscript_url');
+    if (currentAppScriptUrl) {
+      try {
+        const payload = {
+          action: 'add',
+          id: newTransaction.id,
+          tanggal: new Date(newTransaction.date).toLocaleString('id-ID'),
+          keterangan: newTransaction.description,
+          pemasukan: newTransaction.type === 'IN' ? newTransaction.amount : 0,
+          pengeluaran: newTransaction.type === 'OUT' ? newTransaction.amount : 0
+        };
+        fetch(currentAppScriptUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'text/plain',
+          },
+          body: JSON.stringify(payload)
+        }).catch(err => console.error("Gagal sinkronisasi dengan Google Sheets:", err));
+      } catch (err) {
+        console.error("AppScript Error:", err);
+      }
+    }
+  };
+
+  const updateTransaction = (id: number, t: Omit<Transaction, 'id' | 'date'>) => {
+    setTransactions(prev => {
+      const existing = prev.find(item => item.id === id);
+      if (!existing) return prev;
+      
+      const updated = { ...existing, ...t };
+      
+      const currentAppScriptUrl = import.meta.env.VITE_APPSCRIPT_URL || localStorage.getItem('tiffany_appscript_url');
+      if (currentAppScriptUrl) {
+        try {
+          const payload = {
+            action: 'update',
+            id: updated.id,
+            tanggal: new Date(updated.date).toLocaleString('id-ID'),
+            keterangan: updated.description,
+            pemasukan: updated.type === 'IN' ? updated.amount : 0,
+            pengeluaran: updated.type === 'OUT' ? updated.amount : 0
+          };
+          fetch(currentAppScriptUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload)
+          }).catch(err => console.error(err));
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      
+      return prev.map(item => item.id === id ? updated : item);
+    });
+  };
+
+  const deleteTransaction = (id: number) => {
+    setTransactions(prev => prev.filter(item => item.id !== id));
+    
+    const currentAppScriptUrl = import.meta.env.VITE_APPSCRIPT_URL || localStorage.getItem('tiffany_appscript_url');
+    if (currentAppScriptUrl) {
+      try {
+        const payload = {
+          action: 'delete',
+          id: id
+        };
+        fetch(currentAppScriptUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(payload)
+        }).catch(err => console.error("Gagal sinkronisasi dengan Google Sheets:", err));
+      } catch (err) {
+        console.error("AppScript Error:", err);
+      }
+    }
+  };
+
   useEffect(() => {
     localStorage.setItem('tiffany_products', JSON.stringify(products));
   }, [products]);
@@ -146,8 +260,28 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('tiffany_sliders', JSON.stringify(sliders));
   }, [sliders]);
 
+  useEffect(() => {
+    localStorage.setItem('tiffany_transactions', JSON.stringify(transactions));
+  }, [transactions]);
+
+  useEffect(() => {
+    localStorage.setItem('tiffany_appscript_url', appScriptUrl);
+  }, [appScriptUrl]);
+
   return (
-    <DataContext.Provider value={{ products, setProducts, sliders, setSliders }}>
+    <DataContext.Provider value={{
+      products,
+      setProducts,
+      sliders,
+      setSliders,
+      transactions,
+      setTransactions,
+      addTransaction,
+      updateTransaction,
+      deleteTransaction,
+      appScriptUrl,
+      setAppScriptUrl
+    }}>
       {children}
     </DataContext.Provider>
   );

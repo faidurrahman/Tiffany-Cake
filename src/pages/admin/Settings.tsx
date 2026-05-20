@@ -4,7 +4,7 @@ import { useData, SliderImage } from '../../contexts/DataContext';
 import { formatImageUrl } from '../../utils/formatImage';
 
 export default function Settings() {
-  const { sliders, setSliders } = useData();
+  const { sliders, setSliders, appScriptUrl, setAppScriptUrl } = useData();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSlider, setEditingSlider] = useState<SliderImage | null>(null);
   const [formData, setFormData] = useState({
@@ -70,6 +70,28 @@ export default function Settings() {
           <Plus className="w-5 h-5" />
           Tambah Slide
         </button>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-[#ebdxc8] p-6 mb-8">
+        <h2 className="text-lg font-semibold text-[#4a3b32] mb-4 border-b border-gray-100 pb-4">Integrasi Google Sheets</h2>
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Hubungkan Aplikasi dengan Google Sheets untuk mencatat otomatis setiap mutasi kas (Buku Kas & POS Penjualan).
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Google App Script Extension URL</label>
+            <input
+              type="url"
+              value={appScriptUrl}
+              onChange={(e) => setAppScriptUrl(e.target.value)}
+              className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#c4a485] focus:bg-white transition-colors outline-none"
+              placeholder="https://script.google.com/macros/s/..."
+            />
+          </div>
+          <div className="mt-2 text-xs text-green-600">
+            * Data disimpan secara otomatis saat diketik.
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-[#ebdxc8] p-6 mb-8">

@@ -13,7 +13,7 @@ const formatIDR = (amount: number) => {
 };
 
 export default function POS() {
-  const { products } = useData();
+  const { products, addTransaction } = useData();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [shippingFee, setShippingFee] = useState<number>(0);
   const [dateStr, setDateStr] = useState<string>('');
@@ -28,7 +28,6 @@ export default function POS() {
 
   useEffect(() => {
     const date = new Date();
-    // Format: RABU, 18 MARET 2026
     const options: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
     setDateStr(date.toLocaleDateString('id-ID', options).toUpperCase());
   }, []);
@@ -61,19 +60,15 @@ export default function POS() {
     if (!receiptRef.current) return;
     setIsSaving(true);
     
-    // Beri waktu agar UI bisa render state loading sebelum proses berat dimulai
     await new Promise(resolve => setTimeout(resolve, 150));
     
     try {
       const element = receiptRef.current;
       
-      // Simpan posisi scroll saat ini
       const originalScrollY = window.scrollY;
       
-      // Scroll elemen ke dalam viewport agar tidak terpotong oleh html2canvas
       element.scrollIntoView({ behavior: 'auto', block: 'start' });
       
-      // Tambahkan sedikit delay agar browser selesai melakukan scroll
       await new Promise(resolve => setTimeout(resolve, 50));
       
       const canvas = await html2canvas(element, {
@@ -83,7 +78,6 @@ export default function POS() {
         logging: false,
       });
       
-      // Kembalikan posisi scroll
       window.scrollTo({ top: originalScrollY, behavior: 'auto' });
 
       if (canvas.width === 0 || canvas.height === 0) {
@@ -103,7 +97,24 @@ export default function POS() {
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Tiffany-Cake-Receipt-${new Date().getTime()}.pdf`);
-      showToast('PDF berhasil diunduh!', 'success');
+      
+      const totalItems = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+      const grandTotal = totalItems + shippingFee;
+
+      const itemNames = cart.map(item => item.name).join(', ');
+
+      // Add transaction record
+      addTransaction({
+        description: `Nota Penjualan - [${itemNames}] ${shippingFee > 0 ? '(Termasuk Ongkir)' : ''}`.trim(),
+        amount: grandTotal,
+        type: 'IN'
+      });
+
+      // Clear cart
+      setCart([]);
+      setShippingFee(0);
+
+      showToast('Struk berhasil diunduh & dicatat ke kas!', 'success');
     } catch (error) {
       console.error('Error saving PDF:', error);
       const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan';
