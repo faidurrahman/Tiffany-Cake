@@ -180,13 +180,34 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       }
       
       if (Array.isArray(data) && data.length > 0) {
-        const formattedData = data.map((item: any) => ({
-          id: Number(item.id),
-          date: new Date(Number(item.id)).toISOString(),
-          description: item.description || '',
-          amount: Number(item.amount) || 0,
-          type: item.type === 'IN' ? 'IN' : 'OUT'
-        }));
+        const formattedData = data.map((item: any, index: number) => {
+          let type = 'IN';
+          let amount = 0;
+          let pemasukan = Number(item.pemasukan) || 0;
+          let pengeluaran = Number(item.pengeluaran) || 0;
+          
+          if (pemasukan > 0) {
+            type = 'IN';
+            amount = pemasukan;
+          } else if (pengeluaran > 0) {
+            type = 'OUT';
+            amount = pengeluaran;
+          }
+
+          let timestamp = Number(item.id);
+          // Jika ID kosong (data lama), kita buat ID dari waktu + index
+          if (!timestamp || isNaN(timestamp) || timestamp === 0) {
+            timestamp = new Date(item.tanggal || Date.now()).getTime() + index;
+          }
+
+          return {
+            id: timestamp,
+            date: new Date(timestamp).toISOString(),
+            description: item.keterangan || '',
+            amount: amount,
+            type: type as 'IN' | 'OUT'
+          };
+        });
         
         // Urutkan dari yang terbaru
         formattedData.sort((a, b) => b.id - a.id);
