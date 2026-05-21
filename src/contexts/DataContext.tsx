@@ -159,8 +159,38 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const [appScriptUrl, setAppScriptUrl] = useState<string>(() => {
-    return localStorage.getItem('tiffany_appscript_url') || 'https://script.google.com/macros/s/AKfycbxoUF5QtCOarGkSag6RT2RpHh1k3mbPodrDv5oCiFF9IiEHgvNsX0r9whbkzmjNShJZ/exec';
+    return localStorage.getItem('tiffany_appscript_url') || 'https://script.google.com/macros/s/AKfycbzlbCL0vlU4nCW2VGW2M9WU254sjBCDWSujgefGFptTQftCQDeVzY9jNVV9FANU5AYC/exec';
   });
+
+  const syncFromSheets = async () => {
+    const currentAppScriptUrl = import.meta.env.VITE_APPSCRIPT_URL || appScriptUrl;
+    if (!currentAppScriptUrl) return;
+
+    try {
+      const res = await fetch(currentAppScriptUrl);
+      const data = await res.json();
+      
+      if (Array.isArray(data) && data.length > 0) {
+        const formattedData = data.map((item: any) => ({
+          id: Number(item.id),
+          date: new Date(Number(item.id)).toISOString(),
+          description: item.description || '',
+          amount: Number(item.amount) || 0,
+          type: item.type === 'IN' ? 'IN' : 'OUT'
+        }));
+        
+        // Urutkan dari yang terbaru
+        formattedData.sort((a, b) => b.id - a.id);
+        setTransactions(formattedData);
+      }
+    } catch (err) {
+      console.error("Gagal sinkronisasi data dari Google Sheets", err);
+    }
+  };
+
+  useEffect(() => {
+    syncFromSheets();
+  }, [appScriptUrl]);
 
   const addTransaction = (t: Omit<Transaction, 'id' | 'date'>) => {
     const newTransaction: Transaction = {
