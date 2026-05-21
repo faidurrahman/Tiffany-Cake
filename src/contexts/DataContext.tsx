@@ -168,7 +168,16 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const res = await fetch(currentAppScriptUrl);
-      const data = await res.json();
+      if (!res.ok) throw new Error("Gagal mengambil data");
+      
+      const textData = await res.text();
+      let data;
+      try {
+        data = JSON.parse(textData);
+      } catch (err) {
+        console.warn("Respons bukan JSON yang valid. Pastikan Apps Script memiliki fungsi doGet.");
+        return;
+      }
       
       if (Array.isArray(data) && data.length > 0) {
         const formattedData = data.map((item: any) => ({
