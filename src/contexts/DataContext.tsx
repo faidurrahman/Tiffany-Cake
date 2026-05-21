@@ -159,7 +159,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const [appScriptUrl, setAppScriptUrl] = useState<string>(() => {
-    return localStorage.getItem('tiffany_appscript_url') || 'https://script.google.com/macros/s/AKfycbzlbCL0vlU4nCW2VGW2M9WU254sjBCDWSujgefGFptTQftCQDeVzY9jNVV9FANU5AYC/exec';
+    return localStorage.getItem('tiffany_appscript_url') || 'https://script.google.com/macros/s/AKfycbx1ULIai4GuLGt6XutYJt1UOksSQodB7QVg_C-BSjuTyM7fKiYpmr15R9BLmUCiMidl/exec';
   });
 
   const syncFromSheets = async () => {
