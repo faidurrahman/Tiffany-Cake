@@ -17,6 +17,32 @@ const formatDate = (dateString: string) => {
   });
 };
 
+const getLocalDateString = (dateObjOrStr: Date | string) => {
+  const d = new Date(dateObjOrStr);
+  if (isNaN(d.getTime())) return '';
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getTodayString = () => {
+  return getLocalDateString(new Date());
+};
+
+const getFirstDayOfMonthString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}-01`;
+};
+
+const getLastDayOfMonthString = () => {
+  const now = new Date();
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  return getLocalDateString(lastDay);
+};
+
 export default function Kas() {
   const { transactions, addTransaction, updateTransaction, deleteTransaction, syncFromSheets, isSyncing, syncError } = useData();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,6 +53,11 @@ export default function Kas() {
     amount: ''
   });
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Date range filter states (defaulting to current month's dates)
+  const [startDate, setStartDate] = useState<string>(getFirstDayOfMonthString);
+  const [endDate, setEndDate] = useState<string>(getLastDayOfMonthString);
+  const [activeQuickFilter, setActiveQuickFilter] = useState<'ALL' | 'TODAY' | 'MONTH' | 'CUSTOM'>('MONTH');
 
   const handleOpenModal = (isKeluar: boolean, transaction?: Transaction) => {
     setIsKasKeluar(isKeluar);
@@ -84,9 +115,22 @@ export default function Kas() {
     setDeletingId(null);
   };
 
+  const filteredTransactions = transactions.filter(t => {
+    // 1. Filter by search query
+    const matchesSearch = t.description.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!matchesSearch) return false;
+
+    // 2. Filter by date-range (local time comparison for maximum correctness)
+    const txLocalDate = getLocalDateString(t.date);
+    if (startDate && txLocalDate < startDate) return false;
+    if (endDate && txLocalDate > endDate) return false;
+
+    return true;
+  });
+
   const handleExportCSV = () => {
     const headers = ['Tanggal', 'Keterangan', 'Pemasukan', 'Pengeluaran'];
-    const csvData = transactions.map(t => {
+    const csvData = filteredTransactions.map(t => {
       const pemasukan = t.type === 'IN' ? t.amount : 0;
       const pengeluaran = t.type === 'OUT' ? t.amount : 0;
       // Menghilangkan koma pada format tanggal agar tidak mengacaukan CSV
@@ -105,12 +149,8 @@ export default function Kas() {
     document.body.removeChild(link);
   };
 
-  const filteredTransactions = transactions.filter(t => 
-    t.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const totalPemasukan = transactions.filter(t => t.type === 'IN').reduce((sum, t) => sum + t.amount, 0);
-  const totalPengeluaran = transactions.filter(t => t.type === 'OUT').reduce((sum, t) => sum + t.amount, 0);
+  const totalPemasukan = filteredTransactions.filter(t => t.type === 'IN').reduce((sum, t) => sum + t.amount, 0);
+  const totalPengeluaran = filteredTransactions.filter(t => t.type === 'OUT').reduce((sum, t) => sum + t.amount, 0);
   const saldoAkhir = totalPemasukan - totalPengeluaran;
 
   return (
@@ -195,17 +235,101 @@ export default function Kas() {
 
       {/* Transactions List */}
       <div className="bg-white rounded-2xl shadow-sm border border-[#f4ecd8] overflow-hidden">
-        <div className="p-4 border-b border-[#f4ecd8] flex flex-col sm:flex-row gap-4 justify-between items-center bg-[#fdfbf7]">
-          <h2 className="font-semibold text-[#4a3b32]">Riwayat Transaksi</h2>
-          <div className="relative w-full sm:w-64">
-            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input 
-              type="text" 
-              placeholder="Cari transaksi..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-[#ebdxc8] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c4a485] transition-all text-sm"
-            />
+        <div className="p-5 border-b border-[#f4ecd8] flex flex-col gap-4 bg-[#fdfbf7]">
+          {/* Judul & Search */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+            <h2 className="font-semibold text-[#4a3b32] text-lg">Riwayat Transaksi</h2>
+            <div className="relative w-full sm:w-64">
+              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input 
+                type="text" 
+                placeholder="Cari transaksi..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-white border border-[#f4ecd8] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c4a485] transition-all text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Filter Rentang Tanggal & Tombol Cepat */}
+          <div className="flex flex-col lg:flex-row gap-4 pt-3 border-t border-[#f4ecd8]/40 items-start lg:items-center justify-between">
+            {/* Input Date Range */}
+            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-[#8c7b70] whitespace-nowrap">Mulai:</span>
+                <input 
+                  type="date" 
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setActiveQuickFilter('CUSTOM');
+                  }}
+                  className="px-3 py-1.5 bg-white border border-[#ebdxc8] rounded-xl text-xs text-[#4a3b32] focus:outline-none focus:ring-2 focus:ring-[#c4a485] transition-all"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-[#8c7b70] whitespace-nowrap">Sampai:</span>
+                <input 
+                  type="date" 
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    setActiveQuickFilter('CUSTOM');
+                  }}
+                  className="px-3 py-1.5 bg-[#fdfbf7] border border-[#ebdxc8] rounded-xl text-xs text-[#4a3b32] focus:outline-[#c4a485] focus:outline-2 focus:outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Tombol Cepat */}
+            <div className="flex flex-wrap items-center gap-1.5 w-full lg:w-auto lg:justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  const today = getTodayString();
+                  setStartDate(today);
+                  setEndDate(today);
+                  setActiveQuickFilter('TODAY');
+                }}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all ${
+                  activeQuickFilter === 'TODAY'
+                    ? 'bg-[#4a3b32] text-white shadow-sm'
+                    : 'bg-white text-[#4a3b32] border border-[#ebdxc8] hover:bg-stone-50 transition-colors'
+                }`}
+              >
+                Hari Ini
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStartDate(getFirstDayOfMonthString());
+                  setEndDate(getLastDayOfMonthString());
+                  setActiveQuickFilter('MONTH');
+                }}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all ${
+                  activeQuickFilter === 'MONTH'
+                    ? 'bg-[#4a3b32] text-white shadow-sm'
+                    : 'bg-white text-[#4a3b32] border border-[#ebdxc8] hover:bg-stone-50 transition-colors'
+                }`}
+              >
+                Bulan Ini
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
+                  setActiveQuickFilter('ALL');
+                }}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all ${
+                  activeQuickFilter === 'ALL'
+                    ? 'bg-[#4a3b32] text-white shadow-sm'
+                    : 'bg-white text-[#4a3b32] border border-[#ebdxc8] hover:bg-stone-50 transition-colors'
+                }`}
+              >
+                Semua Waktu
+              </button>
+            </div>
           </div>
         </div>
         <div className="overflow-x-auto">
