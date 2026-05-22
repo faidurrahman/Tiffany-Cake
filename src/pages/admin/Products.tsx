@@ -88,67 +88,67 @@ export default function Products() {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-8 gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#4a3b32]">Kelola Produk</h1>
-          <p className="text-[#8c7b70] text-sm mt-1">Tambah, edit, atau hapus produk dari katalog.</p>
+          <h1 className="text-xl md:text-2xl font-bold text-[#4a3b32]">Kelola Produk</h1>
+          <p className="text-[#8c7b70] text-xs md:text-sm mt-0.5 md:mt-1">Tambah, edit, atau hapus produk dari katalog.</p>
         </div>
         <button 
           onClick={() => handleOpenModal()}
-          className="bg-[#c4a485] hover:bg-[#b09072] text-white px-5 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap"
+          className="bg-[#c4a485] hover:bg-[#b09072] text-white px-4 py-2 md:px-5 md:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4 md:w-5 h-5" />
           Tambah Produk
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-[#ebdxc8] overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-[#e8dfc8] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#fdfbf7] border-b border-[#ebdxc8] text-[#8c7b70] text-sm">
-                <th className="p-4 font-medium">Gambar</th>
-                <th className="p-4 font-medium">Nama Produk</th>
-                <th className="p-4 font-medium">Harga</th>
-                <th className="p-4 font-medium hidden md:table-cell">Deskripsi</th>
-                <th className="p-4 font-medium text-right">Aksi</th>
+              <tr className="bg-[#fdfbf7] border-b border-[#e8dfc8] text-[#8c7b70] text-xs md:text-sm">
+                <th className="p-3 md:p-4 font-medium">Gambar</th>
+                <th className="p-3 md:p-4 font-medium">Nama Produk</th>
+                <th className="p-3 md:p-4 font-medium">Harga</th>
+                <th className="p-3 md:p-4 font-medium hidden md:table-cell">Deskripsi</th>
+                <th className="p-3 md:p-4 font-medium text-right">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {products.map((product) => (
                 <tr key={product.id} className="border-b border-[#ebdxc8] last:border-0 hover:bg-stone-50/50 transition-colors group">
-                  <td className="p-4">
+                  <td className="p-3 md:p-4">
                     <img 
                       src={formatImageUrl(product.imageUrl)} 
                       alt={product.name} 
-                      className="w-16 h-16 object-cover rounded-lg border border-gray-100 placeholder-pulse"
+                      className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg border border-gray-100 placeholder-pulse"
                       referrerPolicy="no-referrer"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = "https://placehold.co/200x200/f3f4f6/a8a29e?text=No+Image";
                       }}
                     />
                   </td>
-                  <td className="p-4 font-medium text-[#4a3b32]">{product.name}</td>
-                  <td className="p-4 text-[#c4a485] font-semibold">{formatIDR(product.price)}</td>
-                  <td className="p-4 text-sm text-[#8c7b70] hidden md:table-cell max-w-xs truncate">
+                  <td className="p-3 md:p-4 text-xs md:text-sm font-medium text-[#4a3b32]">{product.name}</td>
+                  <td className="p-3 md:p-4 text-xs md:text-sm text-[#c4a485] font-semibold md:font-bold">{formatIDR(product.price)}</td>
+                  <td className="p-3 md:p-4 text-xs md:text-sm text-[#8c7b70] hidden md:table-cell max-w-xs truncate">
                     {product.description}
                   </td>
-                  <td className="p-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="p-3 md:p-4 text-right">
+                    <div className="flex items-center justify-end gap-1.5 md:gap-2">
                       <button 
                         onClick={() => handleOpenModal(product)}
-                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-1.5 md:p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="Edit"
                       >
-                        <Edit2 className="w-4 h-4" />
+                        <Edit2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                       </button>
                       <button 
                         onClick={() => handleDelete(product.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 md:p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Hapus"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                       </button>
                     </div>
                   </td>
@@ -156,7 +156,7 @@ export default function Products() {
               ))}
               {products.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-gray-500">
+                  <td colSpan={5} className="p-8 text-center text-gray-500 text-xs md:text-sm">
                     Tidak ada produk. Silakan tambah produk baru.
                   </td>
                 </tr>
