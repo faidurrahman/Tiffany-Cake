@@ -5,7 +5,7 @@ import { useData, Product } from '../../contexts/DataContext';
 import { formatImageUrl } from '../../utils/formatImage';
 
 export default function Products() {
-  const { products, setProducts } = useData();
+  const { products, addProduct, updateProduct, deleteProduct } = useData();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
@@ -62,21 +62,24 @@ export default function Products() {
     const priceNum = parseInt(formData.price.replace(/\D/g, ''), 10) || 0;
     
     if (editingProduct) {
-      setProducts(products.map(p => 
-        p.id === editingProduct.id 
-          ? { ...p, ...formData, price: priceNum, imageCrop: croppedArea || undefined }
-          : p
-      ));
+      updateProduct(editingProduct.id, {
+        ...formData,
+        price: priceNum,
+        imageCrop: croppedArea || undefined
+      });
     } else {
-      const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-      setProducts([...products, { ...formData, id: newId, price: priceNum, imageCrop: croppedArea || undefined }]);
+      addProduct({
+        ...formData,
+        price: priceNum,
+        imageCrop: croppedArea || undefined
+      });
     }
     handleCloseModal();
   };
 
   const handleDelete = (id: number) => {
     if (window.confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
-      setProducts(products.filter(p => p.id !== id));
+      deleteProduct(id);
     }
   };
 

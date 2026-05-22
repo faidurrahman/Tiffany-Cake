@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useData, Transaction } from '../../contexts/DataContext';
-import { Plus, ArrowUpRight, ArrowDownRight, Search, Download, Edit2, Trash2 } from 'lucide-react';
+import { Plus, ArrowUpRight, ArrowDownRight, Search, Download, Edit2, Trash2, RefreshCw } from 'lucide-react';
 
 const formatIDR = (amount: number) => {
   return 'Rp ' + amount.toLocaleString('id-ID', { minimumFractionDigits: 0 }).replace(/,/g, '.');
@@ -18,7 +18,7 @@ const formatDate = (dateString: string) => {
 };
 
 export default function Kas() {
-  const { transactions, addTransaction, updateTransaction, deleteTransaction } = useData();
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, syncFromSheets, isSyncing, syncError } = useData();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isKasKeluar, setIsKasKeluar] = useState(false);
@@ -115,12 +115,43 @@ export default function Kas() {
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto font-sans">
+      {syncError && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-800 text-sm flex flex-col gap-1.5 shadow-sm">
+          <div className="font-semibold flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500 block animate-pulse"></span>
+            Koneksi Google Sheets Terhambat
+          </div>
+          <p className="text-gray-650 text-xs">
+            Detail kendala: <code className="bg-red-100 px-1.5 py-0.5 rounded text-xs text-red-700 font-mono italic">{syncError}</code>. 
+          </p>
+          <p className="text-gray-500 text-xs mt-1">
+            * Tips: Periksa menu <span className="font-semibold">Pengaturan Web</span>, pastikan Google Apps Script Extension URL sudah diisi dengan benar dan script tersebut sudah dipublikasikan sebagai <span className="font-semibold">Web App</span> dengan akses <span className="font-semibold">"Anyone"</span> agar data bisa muncul dan disinkronkan ke toko ini secara real-time.
+          </p>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-[#4a3b32]">Buku Kas</h1>
+          <h1 className="text-2xl font-bold text-[#4a3b32] flex items-center gap-2">
+            Buku Kas
+            {isSyncing && <span className="text-xs bg-amber-100 text-amber-800 font-medium px-2 py-0.5 rounded-full animate-pulse">Sinkronisasi Aktif</span>}
+          </h1>
           <p className="text-sm text-[#8c7b70] mt-1">Catat dan pantau arus kas Anda.</p>
         </div>
         <div className="flex flex-wrap gap-2 md:gap-3">
+          <button 
+            onClick={syncFromSheets}
+            disabled={isSyncing}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium border transition-all ${
+              isSyncing 
+                ? 'bg-amber-50 text-amber-500 border-amber-200 cursor-not-allowed' 
+                : 'bg-stone-50 hover:bg-[#f4ecd8] text-[#4a3b32] border-[#ebdxc8]'
+            }`}
+            title="Sinkronkan data dengan Google Sheets sekarang"
+          >
+            <RefreshCw className={`w-5 h-5 ${isSyncing ? 'animate-spin text-amber-500' : ''}`} />
+            <span>{isSyncing ? 'Sinkronisasi...' : 'Sinkronkan'}</span>
+          </button>
           <button 
             onClick={handleExportCSV}
             className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white text-gray-600 border border-gray-200 px-4 py-2.5 rounded-xl font-medium hover:bg-gray-50 transition-colors"
